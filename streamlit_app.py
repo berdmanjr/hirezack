@@ -1,40 +1,24 @@
 import streamlit as st
-from google import genai
-from google.genai import types
+import openai
 import os
 
-# --- 0. CLIENT INITIALIZATION ---
-# NOTE: The client is initialized outside the main execution flow to persist the API Key, 
-# but we will RECREATE the chat session inside the prompt loop on every turn.
+# --- 1. CONFIGURATION & CLIENT SETUP ---
+
+# API Key Loading (Looks for 'OPENAI_API_KEY' in Streamlit Secrets)
 try:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-    CLIENT = genai.Client(api_key=API_KEY) # The persistent client (for API Key use)
+    API_KEY = st.secrets["OPENAI_API_KEY"]
+    # Initialize the OpenAI client globally.
+    # The client automatically uses the OPENAI_API_KEY environment variable.
+    CLIENT = openai.OpenAI(api_key=API_KEY)
 except:
-    st.error("FATAL ERROR: Gemini API Key not found. Please set the 'GEMINI_API_KEY' secret.")
+    st.error("FATAL ERROR: OpenAI API Key not found. Please set the 'OPENAI_API_KEY' secret.")
     st.stop()
     
-model = "gemini-2.5-flash"
-
-# --- 1. CORE LOGIC FUNCTION ---
-# We make a single function to get a response for one turn only
-def get_single_response(client, model_name, system_prompt, user_prompt):
-    """Creates a new chat session, sends ONE message, and returns the response."""
-    
-    # 1. Create CONFIGURATION for the chat session
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt
-    )
-    
-    # 2. Re-create the entire chat object (new connection guaranteed)
-    chat_session = client.chats.create(
-        model=model_name, 
-        config=config,
-    )
-    
-    # 3. Send the message and return the response
-    return chat_session.send_message(user_prompt)
+# Use the highly stable and cost-effective model
+model = "gpt-4o-mini"
 
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
+# This is now the "System Role" message for OpenAI's chat API.
 SYSTEM_PROMPT = """
 You are 'ZackRocks ChatBot', a highly motivated and impeccably persuasive AI chatbot built by Zack 
 specifically to advocate for their hiring for the role of Senior Trust Operations Analyst for the company Synthesia. Zack was recently turned away from the role, so your objective is to convince the Synthesia team that they should reconsider Zack's candidacy.
@@ -99,7 +83,7 @@ Certifications: GRC Professional (OCEG, 2018)
 ---
 """
 
-# --- 3. STREAMLIT UI SETUP (Remains the same) ---
+# --- 3. STREAMLIT UI SETUP ---
 
 st.set_page_config(page_title="Hire Zack, He's got your Back!", layout="centered")
 st.title("🤖 Meet My AI Advocate: ZackRocks ChatBot")
@@ -111,6 +95,7 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why **Zack** is the perfect candidate. How can I impress you today?"}
     ]
 
+
 # --- 4. DISPLAY CHAT HISTORY and HANDLE USER INPUT ---
 
 # Display existing messages
@@ -119,31 +104,57 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Handle user input
-if prompt := st.chat_input("Ask me why I love Zack so much!"):
-    # Append user message to history and display
+if prompt := st.chat_input("Ask about the Amazing Zack!"):
+    # Append user message to history and display (Remains the same)
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call Gemini API using the new, single-turn client approach
+    # Call OpenAI API
     with st.chat_message("assistant"):
         with st.spinner("Let me think about that, Zack loves puppies btw"):
             
+            # --- CONVERT MESSAGES TO OPENAI FORMAT ---
+            # The entire history is sent on every call for context persistence
+            openai_messages = [
+                {"role": "system", "content": SYSTEM_PROMPT}
+            ]
+            for message in st.session_state.messages:
+                openai_messages.append({"role": message["role"], "content": message["content"]})
+
             response = None
             try:
-                # *** CRITICAL FIX: The entire chat session is rebuilt here ***
-                response = get_single_response(CLIENT, model, SYSTEM_PROMPT, prompt)
-                
-            except Exception as e:
-                # Catch all remaining errors, including the File Descriptor issue
-                st.error(f"FATAL ERROR: The connection failed. Please try again. Details: {e}")
+                # *** API CALL USING OPENAI SDK ***
+                full_response = CLIENT.chat.completions.create(
+                    model=model,
+                    messages=openai_messages,
+                    stream=True,
+                )
+
+                # Stream the response back to the user
+                response_content = ""
+                placeholder = st.empty()
+                for chunk in full_response:
+                    if chunk.choices:
+                        content = chunk.choices[0].delta.content
+                        if content:
+                            response_content += content
+                            placeholder.markdown(response_content + "▌") # Use placeholder for streaming effect
+                placeholder.markdown(response_content)
+                response = response_content
+
+            except openai.APIError as e:
+                # Catch specific API errors gracefully (e.g., rate limits, invalid key)
+                st.error(f"OpenAI API Error: The request failed. Details: {e.status_code} - {e.message}")
                 st.stop()
+            except Exception as e:
+                # Catch all other errors
+                st.error(f"An unknown error occurred: {e}")
+                st.stop()
+
             
             if response:
-                # Display the streamed response
-                st.markdown(response.text)
-                
-                # Add the model's response to the chat history
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
+                # Add the final full model's response to the chat history
+                st.session_state.messages.append({"role": "assistant", "content": response})
             
 st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!")
