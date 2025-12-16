@@ -138,29 +138,60 @@ if "chat" not in st.session_state:
 
 # --- 4. DISPLAY CHAT HISTORY and HANDLE USER INPUT ---
 
-# Display existing messages
+# Display existing messages (Remains the same)
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Handle user input
-if prompt := st.chat_input("Ask me about why I love Zack so much!"):
-    # Append user message to history and display
+if prompt := st.chat_input("Ask Candidate-GPT about my qualifications..."):
+    # Append user message to history and display (Remains the same)
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     # Call Gemini API using the cached chat object
     with st.chat_message("assistant"):
-        with st.spinner("Candidate-GPT is formulating a perfectly persuasive response..."):
+        with st.spinner("Let me think about that, Zack loves puppies btw"):
             
-            # This uses the persistent chat object derived from the singleton client
-            response = st.session_state.chat.send_message(prompt)
+            response = None
+            try:
+                # FIRST ATTEMPT: Use the existing session chat object
+                response = st.session_state.chat.send_message(prompt)
+            except RuntimeError as e:
+                # DEFENSIVE FIX: If the client is closed (the specific error you get), 
+                # we assume the global client died. Force re-initialization.
+                if "client has been closed" in str(e):
+                    st.warning("Connection lost. Attempting to restart chat session...")
+                    
+                    # Force re-initialization of the client and chat session
+                    # This calls the globally persistent function defined earlier.
+                    try:
+                        st.session_state.chat = initialize_chat_session(model, SYSTEM_PROMPT)
+                        # Retry the message immediately after re-initialization
+                        response = st.session_state.chat.send_message(prompt)
+                        st.success("Connection successfully restored!")
+                    except Exception as restart_e:
+                        st.error(f"Failed to restore connection. Please refresh the page. Details: {restart_e}")
+                        st.stop()
+                else:
+                    # Re-raise any other unexpected RuntimeError
+                    st.error(f"An unexpected API error occurred: {e}")
+                    st.stop()
+            except genai.errors.ServerError:
+                # Display the 503 error gracefully without crashing
+                st.error("The Gemini service is temporarily unavailable (503). Please try again later.")
+                st.stop()
+            except Exception as e:
+                st.error(f"An unknown error occurred during message send: {e}")
+                st.stop()
+
             
-            # Display the streamed response
-            st.markdown(response.text)
-            
-            # Add the model's response to the chat history
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            if response:
+                # Display the streamed response
+                st.markdown(response.text)
+                
+                # Add the model's response to the chat history
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
             
 st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!")
