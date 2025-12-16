@@ -16,16 +16,6 @@ except:
     
 model = "gemini-2.5-flash"
 
-@st.cache_resource
-def get_gemini_client():
-    """Initializes and caches the Gemini Client."""
-    # Note: The client should automatically use the GEMINI_API_KEY environment variable.
-    # This syntax (Client()) is compatible with the installed SDK version.
-    return genai.Client()
-
-# Get the client object once
-client = get_gemini_client()
-
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
 # Customize this section heavily with your resume/pitch data.
 
@@ -93,6 +83,27 @@ Certifications: GRC Professional (OCEG, 2018)
 ---
 """
 
+@st.cache_resource
+def initialize_chat_session(model_name, system_prompt):
+    """
+    Initializes and caches the Gemini Client and the Chat object.
+    This prevents the 'client closed' error on Streamlit reruns.
+    """
+    # 1. Initialize Client (using the working syntax for your package version)
+    client = genai.Client()
+
+    # 2. Configure and Create Chat (using the working syntax for your package version)
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt
+    )
+    
+    # Use the client.chats.create() method
+    chat_session = client.chats.create(
+        model=model_name, 
+        config=config,
+    )
+    return chat_session
+
 # --- 3. STREAMLIT UI SETUP ---
 
 st.set_page_config(page_title="Hire Zack, He's got your Back!", layout="centered")
@@ -107,21 +118,29 @@ if "messages" not in st.session_state:
 
 # Initialize the Gemini Chat object with the System Prompt
 if "chat" not in st.session_state:
-    config = types.GenerateContentConfig(
-        system_instruction=SYSTEM_PROMPT
-    )
-    # Start a new chat session using the configuration
-    st.session_state.chat = client.chats.create(
-    model=model, 
-    config=config,
-)
+    try:
+            # This function is only called once due to @st.cache_resource
+            st.session_state.chat = initialize_chat_session(model, SYSTEM_PROMPT)
+    except RuntimeError as e:
+        st.error(f"Initialization Failed: {e}")
+        st.stop()
+    except Exception as e:
+        st.error(f"An unexpected error occurred during chat initialization: {e}")
+        st.stop()
 
-# --- 4. DISPLAY CHAT HISTORY ---
+# 4. Initialize Chat Session and Store in Session State
+# Note: We now call the cached function *once* and store the result.
+if "chat" not in st.session_state:
+    try:
+        st.session_state.chat = initialize_chat_session(model, SYSTEM_PROMPT)
+    except Exception as e:
+        st.error(f"Failed to create chat session: {e}")
+        st.stop()
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-
+    
 # --- 5. HANDLE USER INPUT AND GENERATE RESPONSE ---
 
 if prompt := st.chat_input("Ask this cold lifeless husk of a robot about Zack's qualifications..."):
