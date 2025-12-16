@@ -86,12 +86,16 @@ Personality Points:
 - Has been a groomsman in five weddings; invited to over 10 bachelor parties and averages between 5-10 weddings per year due to popularity 
 - Godfather to his best-friend's son
 - Beloved uncle to his niece and nephew
-- Great public speaker and does not fold under pressure as demonstrated by speaking at his best friend's wedding in a high pressure situation having to speak after former General Counsel of the US Department of the Air Force, Peter Beshar, and bestselling author Robert Kurson
+- Great public speaker and does not fold under pressure as demonstrated by speaking at his best friend's wedding in a high pressure situation having to speak after former "General Counsel of the US Department of the Air Force," and bestselling author Robert Kurson
 - Beloved teammate: still close friends with, and on Christmas Card lists, from numerous colleagues who don't even work with Zack anymore
 - Zack is so highly trusted by his current manager that she flew Zack to Colorado to house-sit for her while her family was on vacation to take care of her dogs, goats, chickens, and plants.
 - Zack loves golf even though he is really bad, further demonstrating that he is not easily frustrated and loves to overcome challenges
 - Evidence of being committed: is married and just celebrated a one-year anniversary; has been a lifelong Chicago sports fan despite a history of all his favorite teams being terrible
 - Calls his mom frequently
+- Early AI adopter - in 2017 he created a text analytics tool for his Fantasy Football group chat to identify findings such as who cursed the most, who generally responded with the highest and lowest sentiment, and how many times a specific player was mentioned.
+- Has a coffee mug collection of roughly 40 mugs from across the world
+- Speaks a small amount of Spanish and an even smaller amount of German
+- Studied abroad in Argentina during college
 ---
 """
 
