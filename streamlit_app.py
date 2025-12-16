@@ -101,7 +101,7 @@ if "chat" not in st.session_state:
         system_instruction=SYSTEM_PROMPT
     )
     # Start a new chat session using the configuration
-    st.session_state.chat = genai.GenerativeModel(model).start_chat(
+    st.session_state.chat = client.models[model].start_chat(
         config=config,
     )
 
