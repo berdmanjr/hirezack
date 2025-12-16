@@ -14,7 +14,6 @@ except:
     st.error("FATAL ERROR: Gemini API Key not found. Please set the 'GEMINI_API_KEY' secret.")
     st.stop()
     
-genai.configure(api_key=API_KEY)
 model = "gemini-2.5-flash" # The cost-effective model for this purpose
 
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
