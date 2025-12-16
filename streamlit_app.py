@@ -1,6 +1,6 @@
 import streamlit as st
-from google import genai
-from google.genai import types
+import google.generativeai as genai  # <-- FIX 1: Change import structure
+from google.generativeai import types # <-- FIX 2: Change types import
 import os
 
 # --- 1. CONFIGURATION ---
