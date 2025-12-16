@@ -16,6 +16,12 @@ except:
     
 model = "gemini-2.5-flash" # The cost-effective model for this purpose
 
+try:
+    client = genai.Client()
+except Exception as e:
+    st.error(f"FATAL ERROR: Could not initialize Gemini Client. Details: {e}")
+    st.stop()
+    
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
 # Customize this section heavily with your resume/pitch data.
 
@@ -101,7 +107,10 @@ if "chat" not in st.session_state:
         system_instruction=SYSTEM_PROMPT
     )
     # Start a new chat session using the configuration
-    st.session_state.chat = genai.GenerativeModel(model).start_chat(config=config)
+    st.session_state.chat = client.chats.create(
+    model=model, 
+    config=config,
+)
 
 # --- 4. DISPLAY CHAT HISTORY ---
 
