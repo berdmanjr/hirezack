@@ -120,7 +120,7 @@ for message in st.session_state.messages:
 
 # --- 5. HANDLE USER INPUT AND GENERATE RESPONSE ---
 
-if prompt := st.chat_input("Ask this cold lifeless husk of a robot about my qualifications..."):
+if prompt := st.chat_input("Ask this cold lifeless husk of a robot about Zack's qualifications..."):
     # Display user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
