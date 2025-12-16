@@ -21,7 +21,20 @@ try:
 except Exception as e:
     st.error(f"FATAL ERROR: Could not initialize Gemini Client. Details: {e}")
     st.stop()
-    
+
+# Cache the client and model, so they only run once
+if "client" not in st.session_state:
+    try:
+        # CRITICAL FIX: Initialize the client and store it in session_state
+        st.session_state.client = genai.Client()
+    except Exception as e:
+        st.error(f"FATAL ERROR: Could not initialize Gemini Client. Details: {e}")
+        st.stop()
+
+# Now, retrieve the client object for use in the script
+client = st.session_state.client
+model = "gemini-2.5-flash"
+
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
 # Customize this section heavily with your resume/pitch data.
 
