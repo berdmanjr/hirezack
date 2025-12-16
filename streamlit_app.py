@@ -3,20 +3,36 @@ from google import genai
 from google.genai import types
 import os
 
-# --- 0. RESOURCE INITIALIZATION (No more global function to cause NameError) ---
-
-# --- 1. CONFIGURATION & SETUP ---
-
-# API Key Loading (Looks for 'GEMINI_API_KEY' in Streamlit Secrets)
+# --- 0. CLIENT INITIALIZATION ---
+# NOTE: The client is initialized outside the main execution flow to persist the API Key, 
+# but we will RECREATE the chat session inside the prompt loop on every turn.
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
-    # Initialize the client immediately and store it globally for session scope persistence
-    CLIENT = genai.Client(api_key=API_KEY)
+    CLIENT = genai.Client(api_key=API_KEY) # The persistent client (for API Key use)
 except:
     st.error("FATAL ERROR: Gemini API Key not found. Please set the 'GEMINI_API_KEY' secret.")
     st.stop()
     
 model = "gemini-2.5-flash"
+
+# --- 1. CORE LOGIC FUNCTION ---
+# We make a single function to get a response for one turn only
+def get_single_response(client, model_name, system_prompt, user_prompt):
+    """Creates a new chat session, sends ONE message, and returns the response."""
+    
+    # 1. Create CONFIGURATION for the chat session
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt
+    )
+    
+    # 2. Re-create the entire chat object (new connection guaranteed)
+    chat_session = client.chats.create(
+        model=model_name, 
+        config=config,
+    )
+    
+    # 3. Send the message and return the response
+    return chat_session.send_message(user_prompt)
 
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
 SYSTEM_PROMPT = """
@@ -83,7 +99,7 @@ Certifications: GRC Professional (OCEG, 2018)
 ---
 """
 
-# --- 3. STREAMLIT UI SETUP ---
+# --- 3. STREAMLIT UI SETUP (Remains the same) ---
 
 st.set_page_config(page_title="Hire Zack, He's got your Back!", layout="centered")
 st.title("🤖 Meet My AI Advocate: ZackRocks ChatBot")
@@ -95,29 +111,6 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why **Zack** is the perfect candidate. How can I impress you today?"}
     ]
 
-# --- Core Chat Initialization Logic (Only runs once) ---
-
-# Helper function to create the chat session
-def create_chat_session(client, model_name, system_prompt):
-    """Creates a new chat session using the provided client."""
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt
-    )
-    # Use the client.chats.create() method on the persistent client
-    return client.chats.create(
-        model=model_name, 
-        config=config,
-    )
-
-if "chat" not in st.session_state:
-    try:
-        # Initialize the chat session
-        st.session_state.chat = create_chat_session(CLIENT, model, SYSTEM_PROMPT)
-    except Exception as e:
-        st.error(f"Initialization Failed during setup: {e}")
-        st.stop()
-
-
 # --- 4. DISPLAY CHAT HISTORY and HANDLE USER INPUT ---
 
 # Display existing messages
@@ -126,47 +119,25 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Handle user input
-if prompt := st.chat_input("Ask Candidate-GPT about my qualifications..."):
-    # Append user message to history and display (Remains the same)
+if prompt := st.chat_input("Ask me why I love Zack so much!"):
+    # Append user message to history and display
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call Gemini API using the cached chat object
+    # Call Gemini API using the new, single-turn client approach
     with st.chat_message("assistant"):
         with st.spinner("Let me think about that, Zack loves puppies btw"):
             
             response = None
             try:
-                # FIRST ATTEMPT: Use the existing session chat object
-                response = st.session_state.chat.send_message(prompt)
-            except RuntimeError as e:
-                # DEFENSIVE FIX: If the client is closed (the specific error you get), 
-                # force re-initialization using the accessible helper function.
-                if "client has been closed" in str(e):
-                    st.warning("Connection lost. Attempting to restart chat session...")
-                    
-                    try:
-                        # Re-initialize the chat session (using the globally defined CLIENT)
-                        st.session_state.chat = create_chat_session(CLIENT, model, SYSTEM_PROMPT)
-                        # Retry the message immediately after re-initialization
-                        response = st.session_state.chat.send_message(prompt)
-                        st.success("Connection successfully restored!")
-                    except Exception as restart_e:
-                        st.error(f"Failed to restore connection. Please refresh the page. Details: {restart_e}")
-                        st.stop()
-                else:
-                    # Catch other unexpected RuntimeErrors
-                    st.error(f"An unexpected API error occurred: {e}")
-                    st.stop()
-            except genai.errors.ServerError:
-                # Catch 503 errors gracefully
-                st.error("The Gemini service is temporarily unavailable (503). Please try again later.")
-                st.stop()
+                # *** CRITICAL FIX: The entire chat session is rebuilt here ***
+                response = get_single_response(CLIENT, model, SYSTEM_PROMPT, prompt)
+                
             except Exception as e:
-                st.error(f"An unknown error occurred during message send: {e}")
+                # Catch all remaining errors, including the File Descriptor issue
+                st.error(f"FATAL ERROR: The connection failed. Please try again. Details: {e}")
                 st.stop()
-
             
             if response:
                 # Display the streamed response
