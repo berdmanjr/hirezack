@@ -1,6 +1,6 @@
 import streamlit as st
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 import os
 
 # --- 1. CONFIGURATION ---
@@ -101,8 +101,7 @@ if "chat" not in st.session_state:
         system_instruction=SYSTEM_PROMPT
     )
     # Start a new chat session using the configuration
-    st.session_state.chat = client.models[model].start_chat(
-        config=config,
+    st.session_state.chat = genai.GenerativeModel(model).start_chat(config=config),
     )
 
 # --- 4. DISPLAY CHAT HISTORY ---
