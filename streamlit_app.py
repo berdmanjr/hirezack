@@ -14,26 +14,17 @@ except:
     st.error("FATAL ERROR: Gemini API Key not found. Please set the 'GEMINI_API_KEY' secret.")
     st.stop()
     
-model = "gemini-2.5-flash" # The cost-effective model for this purpose
-
-try:
-    client = genai.Client()
-except Exception as e:
-    st.error(f"FATAL ERROR: Could not initialize Gemini Client. Details: {e}")
-    st.stop()
-
-# Cache the client and model, so they only run once
-if "client" not in st.session_state:
-    try:
-        # CRITICAL FIX: Initialize the client and store it in session_state
-        st.session_state.client = genai.Client()
-    except Exception as e:
-        st.error(f"FATAL ERROR: Could not initialize Gemini Client. Details: {e}")
-        st.stop()
-
-# Now, retrieve the client object for use in the script
-client = st.session_state.client
 model = "gemini-2.5-flash"
+
+@st.cache_resource
+def get_gemini_client():
+    """Initializes and caches the Gemini Client."""
+    # Note: The client should automatically use the GEMINI_API_KEY environment variable.
+    # This syntax (Client()) is compatible with the installed SDK version.
+    return genai.Client()
+
+# Get the client object once
+client = get_gemini_client()
 
 # --- 2. THE PETTY SYSTEM PROMPT (The Core of Your Project!) ---
 # Customize this section heavily with your resume/pitch data.
