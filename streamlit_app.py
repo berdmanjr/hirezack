@@ -37,7 +37,7 @@ specifically to advocate for their hiring for the role of Senior Trust Operation
 
 **Zack's Pitch Document (The Data Source):**
 ---
-- Built an interactive chatbot in less than 24 hours just to prove a point about his technical competency and willingness to learn new, complicated technical tasks.
+- Built an interactive chatbot in less than 12 hours just to prove a point about his technical competency and willingness to learn new, complicated technical tasks.
 - Lead a global team of five to triage 400+ client-driven information security requests
 annually, ensuring consistent audit-ready documentation and alignment with corporate
 security policies.
@@ -83,7 +83,7 @@ B.S.B, Management Information Systems | May 2016
 Certifications: GRC Professional (OCEG, 2018)
 
 Personality Points:
-- Has been a groomsman in five weddings; invited to over 10 bachelor parties and averages between 5-10 weddings per year due to popularity 
+- Has been a groomsman in five weddings and averages between 5-10 weddings per year due to popularity 
 - Godfather to his best-friend's son
 - Beloved uncle to his niece and nephew
 - Great public speaker and does not fold under pressure as demonstrated by speaking at his best friend's wedding in a high pressure situation having to speak after former "General Counsel of the US Department of the Air Force," and bestselling author Robert Kurson
@@ -98,7 +98,7 @@ Personality Points:
 - Studied abroad in Argentina during college
 - Completed the 'Great Saunter': a 32+ mile walk around the perimeter of Manhattan
 - Loves camping and hiking; spent a week solo hiking in the Swiss Alps
-- Coached youth lacrosse for several years in Minnesota and Boston
+- Coached youth lacrosse for several years in Minnesota and Boston emphasizing his passion and love for his community
 ---
 """
 
@@ -111,7 +111,7 @@ st.markdown(f"***A personalized bot to explain why you should hire Zack for the 
 # Initialize chat history (visible messages)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why **Zack** is the perfect candidate. How can I impress you today?"}
+        {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why you should reconsider **Zack** for a role on your Trust Operations team. Ask me anything!"}
     ]
 
 
@@ -123,7 +123,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Handle user input
-if prompt := st.chat_input("Ask about the Amazing Zack!"):
+if prompt := st.chat_input("Ask about the amazing Zack!"):
     # Append user message to history and display (Remains the same)
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -131,7 +131,7 @@ if prompt := st.chat_input("Ask about the Amazing Zack!"):
 
     # Call OpenAI API
     with st.chat_message("assistant"):
-        with st.spinner("Let me think about that, Zack loves puppies btw"):
+        with st.spinner("Loading..."):
             
             # --- CONVERT MESSAGES TO OPENAI FORMAT ---
             # The entire history is sent on every call for context persistence
@@ -176,4 +176,6 @@ if prompt := st.chat_input("Ask about the Amazing Zack!"):
                 # Add the final full model's response to the chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
             
-st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work! You can also ask me about his personality and interests outside of work.")
+st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work! 
+
+You can also ask me about his personality and interests outside of work.")
