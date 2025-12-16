@@ -1,13 +1,31 @@
 import streamlit as st
-from google import genai 
-from google.genai import types 
+from google import genai
+from google.genai import types
 import os
 
-# --- 1. CONFIGURATION ---
+# --- 0. RESOURCE INITIALIZATION (The "Nuclear" Fix) ---
+# This dictionary will hold the globally persistent client instance.
+# Streamlit may execute the lines below the imports only once per session.
+PERSISTENT_RESOURCES = {}
 
-# IMPORTANT: Configure your API Key.
-# For Streamlit Cloud deployment, it automatically looks for GEMINI_API_KEY 
-# in the Secrets panel. This avoids exposing your key.
+def get_client_singleton(api_key):
+    """
+    Initializes the Gemini Client only once per app lifespan,
+    bypassing repeated executions by Streamlit.
+    """
+    global PERSISTENT_RESOURCES
+    if "gemini_client" not in PERSISTENT_RESOURCES:
+        try:
+            # Initialize the client. It should pick up the API_KEY from the environment.
+            PERSISTENT_RESOURCES["gemini_client"] = genai.Client(api_key=api_key)
+        except Exception as e:
+            raise RuntimeError(f"Gemini Client Initialization Failed: {e}")
+    
+    return PERSISTENT_RESOURCES["gemini_client"]
+
+# --- 1. CONFIGURATION & SETUP ---
+
+# API Key Loading (Looks for 'GEMINI_API_KEY' in Streamlit Secrets)
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
@@ -83,44 +101,33 @@ Certifications: GRC Professional (OCEG, 2018)
 ---
 """
 
-@st.cache_resource
-def initialize_chat_session(model_name, system_prompt):
-    """
-    Initializes and caches the Gemini Client and the Chat object.
-    This prevents the 'client closed' error on Streamlit reruns.
-    """
-    # 1. Initialize Client (using the working syntax for your package version)
-    client = genai.Client()
-
-    # 2. Configure and Create Chat (using the working syntax for your package version)
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt
-    )
-    
-    # Use the client.chats.create() method
-    chat_session = client.chats.create(
-        model=model_name, 
-        config=config,
-    )
-    return chat_session
-
 # --- 3. STREAMLIT UI SETUP ---
 
 st.set_page_config(page_title="Hire Zack, He's got your Back!", layout="centered")
 st.title("🤖 Meet My AI Advocate: ZackRocks ChatBot")
 st.markdown(f"***A personalized bot to explain why you should hire Zack for the Senior Trust Operations Analyst role.***")
 
-# Initialize chat history in Streamlit's session state
+# Initialize chat history (visible messages)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why **Zack** is the perfect candidate. I have a very reliable source that has confirmed he is still interested in the role, and would love to continue with the hiring process if you'll take him back!"}
+        {"role": "assistant", "content": "Welcome! I am ZackRocks ChatBot. I've been exclusively trained to provide compelling reasons why **Zack** is the perfect candidate. How can I impress you today?"}
     ]
 
-# Initialize the Gemini Chat object with the System Prompt
+# *** CRITICAL FIX: Initialize the persistent client and chat session ***
 if "chat" not in st.session_state:
     try:
-            # This function is only called once due to @st.cache_resource
-            st.session_state.chat = initialize_chat_session(model, SYSTEM_PROMPT)
+        # Get the globally persistent client instance
+        client = get_client_singleton(API_KEY) 
+        
+        config = types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT
+        )
+        
+        # Use the client.chats.create() method on the persistent client
+        st.session_state.chat = client.chats.create(
+            model=model, 
+            config=config,
+        )
     except RuntimeError as e:
         st.error(f"Initialization Failed: {e}")
         st.stop()
@@ -128,33 +135,26 @@ if "chat" not in st.session_state:
         st.error(f"An unexpected error occurred during chat initialization: {e}")
         st.stop()
 
-# 4. Initialize Chat Session and Store in Session State
-# Note: We now call the cached function *once* and store the result.
-if "chat" not in st.session_state:
-    try:
-        st.session_state.chat = initialize_chat_session(model, SYSTEM_PROMPT)
-    except Exception as e:
-        st.error(f"Failed to create chat session: {e}")
-        st.stop()
 
+# --- 4. DISPLAY CHAT HISTORY and HANDLE USER INPUT ---
+
+# Display existing messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-    
-# --- 5. HANDLE USER INPUT AND GENERATE RESPONSE ---
 
-if prompt := st.chat_input("Ask this cold lifeless husk of a robot about Zack's qualifications..."):
-    # Display user message
+# Handle user input
+if prompt := st.chat_input("Ask me about why I love Zack so much!"):
+    # Append user message to history and display
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call Gemini API
+    # Call Gemini API using the cached chat object
     with st.chat_message("assistant"):
-        with st.spinner("Please wait while I think about all the reasons Zack is a phenomenal hire"):
+        with st.spinner("Candidate-GPT is formulating a perfectly persuasive response..."):
             
-            # Send the user's message to the Gemini chat object
-            # The chat object automatically manages the history.
+            # This uses the persistent chat object derived from the singleton client
             response = st.session_state.chat.send_message(prompt)
             
             # Display the streamed response
