@@ -176,4 +176,4 @@ if prompt := st.chat_input("Ask about the amazing Zack!"):
                 # Add the final full model's response to the chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
             
-st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!  \nYou can also ask me about his personality and interests outside of work.")
+st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!  \n\nYou can also ask me about his personality and interests outside of work.")
