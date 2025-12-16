@@ -134,4 +134,4 @@ if prompt := st.chat_input("Ask this cold lifeless husk of a robot about my qual
             # Add the model's response to the chat history
             st.session_state.messages.append({"role": "assistant", "content": response.text})
             
-st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Cost Optimization**, **Python scripting**, or **Cloud Architecture** to see [Your Name]'s best work!")
+st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!")
