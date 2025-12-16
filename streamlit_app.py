@@ -96,6 +96,9 @@ Personality Points:
 - Has a coffee mug collection of roughly 40 mugs from across the world
 - Speaks a small amount of Spanish and an even smaller amount of German
 - Studied abroad in Argentina during college
+- Completed the 'Great Saunter': a 32+ mile walk around the perimeter of Manhattan
+- Loves camping and hiking; spent a week solo hiking in the Swiss Alps
+- Coached youth lacrosse for several years in Minnesota and Boston
 ---
 """
 
@@ -173,4 +176,4 @@ if prompt := st.chat_input("Ask about the Amazing Zack!"):
                 # Add the final full model's response to the chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
             
-st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work!")
+st.sidebar.markdown(f"**Tip for the Hiring Manager:** Ask me about **Strategic customer support**, **Audit Management**, or **Process Optimization** to see Zack's best work! You can also ask me about his personality and interests outside of work.")
