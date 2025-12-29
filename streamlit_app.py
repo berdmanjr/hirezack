@@ -112,7 +112,7 @@ st.markdown(f"***A personalized bot to tell you why you should hire Zack.***")
 # Initialize chat history (visible messages)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Welcome! I am ZackRocks Chatbot. I've been exclusively trained to provide compelling reasons why you should hire **Zack**.. Ask me anything!"}
+        {"role": "assistant", "content": "Welcome! I am ZackRocks Chatbot. I've been exclusively trained to provide compelling reasons why you should hire **Zack**. Ask me anything!"}
     ]
 
 
